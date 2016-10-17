@@ -395,6 +395,38 @@ cache(function(data, match, sendBadge, request) {
   });
 }));
 
+// OpenStack integration
+camp.route(/^\/openstack\/(p|d)\/(.*)\/(.*)(?:\/(.+))?\.(svg|png|gif|jpg|json)$/,
+cache(function(data, match, sendBadge, request) {
+  var resource = match[1];
+  var team = match[2];
+  var deliverable = match[3];
+  var format = match[5];
+  var options = {
+    method: 'GET',
+    uri: 'https://governance.openstack.org/reference/projects/' + team + '.html',
+  };
+
+  var badgeData = getBadgeData('project', data);
+  request(options, function(err, res) {
+    if (err != null) {
+      console.error('OpenStack error: ' + err.stack);
+      if (res) { console.error(''+res); }
+      badgeData.text[1] = 'invalid';
+      sendBadge(format, badgeData);
+    } else if (res.statusCode == 404) {
+        console.error('OpenStack error: project team does not exist');
+        badgeData.text[1] = 'not official';
+        badgeData.colorscheme = 'red';
+        sendBadge(format, badgeData);
+    } else {
+        badgeData.text[1] = 'official';
+        badgeData.colorscheme = 'green';
+        sendBadge(format, badgeData);
+    }
+  });
+}));
+
 // Shippable integration
 camp.route(/^\/shippable\/([^\/]+)(?:\/(.+))?\.(svg|png|gif|jpg|json)$/,
 cache(function (data, match, sendBadge, request) {
